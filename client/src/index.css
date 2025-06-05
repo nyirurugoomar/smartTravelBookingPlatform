@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+
+.active hr{
+    @apply block;
+}
+.grid-cols-auto {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem; /* Optional: adjust spacing */
+  }
