@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import { tripApi } from '../api';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 function Trips() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTrips = async () => {
       try {
         const data = await tripApi.getAll();
-        console.log('Received trips data:', data); // Debug log
+        console.log('Trips API Response:', JSON.stringify(data, null, 2));
+       
+        if (data && data.length > 0) {
+          console.log('First trip image data:', {
+            tripId: data[0]._id,
+            images: data[0].images,
+            imageType: typeof data[0].images,
+            isArray: Array.isArray(data[0].images)
+          });
+        }
         setTrips(data);
         setLoading(false);
       } catch (err) {
-        console.error('Error loading trips:', err); // Debug log
+        console.error('Error loading trips:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -58,38 +70,78 @@ function Trips() {
   }
 
   return (
-    <div className='flex flex-col gap-4 py-4'>
+    <div className='flex flex-col gap-8 py-4'>
       <Hero />
-      <div className='flex flex-col gap-4 mt-10'>
-        <div className='w-full grid grid-cols-auto gap-4 gap-y-6'>
-          {trips.map((trip) => (
-            <div 
-              key={trip._id} 
-              style={{
-                backgroundImage: `url(${trip.images || 'https://www.shutterstock.com/image-vector/no-image-picture-available-on-600nw-2450891049.jpg'})`
-              }} 
-              className='h-[200px] border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-500 p-4 bg-cover bg-center'
+      <h1 className="text-4xl font-bold">Available Trips{" "} <span className="text-primary">({trips.length})</span></h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {trips.map((trip) => {
+         
+          console.log(`Trip ${trip._id} image data:`, {
+            images: trip.images,
+            imageType: typeof trip.images,
+            isArray: Array.isArray(trip.images)
+          });
+
+         
+          let imageUrl = "https://www.shutterstock.com/image-vector/no-image-picture-available-on-600nw-2450891049.jpg";
+          if (trip.images) {
+            if (Array.isArray(trip.images) && trip.images.length > 0) {
+              imageUrl = trip.images[0];
+            } else if (typeof trip.images === 'string') {
+              imageUrl = trip.images;
+            }
+          }
+
+          return (
+            <div
+              key={trip._id}
+              onClick={() => navigate(`/trips/${trip._id}`)}
+              className="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-500"
             >
-              <div className='flex flex-col gap-2 items-center justify-between px-2'>
-                <div className='p-8 bg-black/50 rounded-xl w-full h-full mt-20'>
-                  <h3 className='text-2xl font-semibold text-white'>{trip.name || 'Trip'}</h3>
-                  <p className='text-sm font-medium text-white'>
-                    RWF {trip.price?.toLocaleString() || 'Price not available'}
+              <img
+                src={imageUrl}
+                alt={trip.name || "Trip"}
+                className="w-full h-[250px] object-cover"
+                onError={(e) => {
+                  console.error(`Failed to load image for trip ${trip._id}:`, imageUrl);
+                  e.target.onerror = null;
+                  e.target.src = "https://www.shutterstock.com/image-vector/no-image-picture-available-on-600nw-2450891049.jpg";
+                }}
+              />
+              
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">
+                  {trip.name || "Unnamed Trip"}
+                </h3>
+                <div className="space-y-2 mb-4">
+                  <p className="text-gray-600">
+                    {trip.date ? format(new Date(trip.date), "MMMM d, yyyy") : "Date not available"}
                   </p>
-                  <p className='text-sm font-medium text-white mt-2'>
-                    {trip.location || 'Location not available'}
+                  <p className="text-gray-600">
+                    {trip.location || "Location not available"}
                   </p>
-                  <p className='text-sm font-medium text-white'>
-                    {trip.date ? new Date(trip.date).toLocaleDateString() : 'Date not available'}
+                  <p className="text-gray-600">
+                    Duration: {trip.duration || "Not specified"}
                   </p>
-                  <button className='mt-4 bg-[#1fffc6] text-black font-bold px-6 py-2 rounded-full hover:bg-[#1ae6b3] transition-colors'>
-                    Book Now
-                  </button>
+                  <p className="text-primary font-semibold">
+                    RWF {trip.price?.toLocaleString() || "Price not available"}
+                  </p>
                 </div>
+                
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click when clicking button
+                    navigate(`/trips/${trip._id}`);
+                  }}
+                  className="w-full cursor-pointer bg-primary text-white px-6 py-3 rounded-full hover:bg-blue-600 transition-colors"
+                >
+                  Book Now
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );

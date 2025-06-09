@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import Hero from '../components/Hero'
 import { eventApi } from '../api'
+import { useNavigate } from 'react-router-dom'
 
 function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -65,6 +67,7 @@ function Events() {
           {events.map((event) => (
             <div
               key={event._id}
+              onClick={() => navigate(`/events/${event._id}`)}
               className="border border-blue-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
             >
               <img

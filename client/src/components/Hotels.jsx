@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { hotelApi } from "../api";
+import { useNavigate } from "react-router-dom";
 
 function Hotels() {
+  const navigate = useNavigate();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,11 +60,12 @@ function Hotels() {
 
   return (
     <div className="flex flex-col gap-4 py-4 mt-10">
-      <h1 className="text-2xl font-bold">Hotels</h1>
+      <h1 className="text-2xl font-bold">Hotels{" "} <span className="text-primary">({hotels.length})</span></h1>
       <div className="w-full grid grid-cols-auto gap-4 gap-y-6">
         {hotels.map((hotel) => (
           <div
             key={hotel._id}
+            onClick={() => navigate(`/hotels/${hotel._id}`)}
             style={{
               backgroundImage: `url(${
                 Array.isArray(hotel.images) && hotel.images.length > 0
@@ -84,7 +87,13 @@ function Hotels() {
                 <p className="text-sm font-medium text-white">
                   {hotel.rating ? `${hotel.rating} ★` : "Rating not available"}
                 </p>
-                <button className="mt-4  bg-primary text- font-bold px-6 py-2 rounded-full hover:bg-blue-500 cursor-pointer transition-colors">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click when clicking button
+                    navigate(`/hotels/${hotel._id}`);
+                  }}
+                  className="mt-4 bg-primary text-white font-bold px-6 py-2 rounded-full hover:bg-blue-500 cursor-pointer transition-colors"
+                >
                   Book Now
                 </button>
               </div>

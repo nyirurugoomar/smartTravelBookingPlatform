@@ -9,6 +9,9 @@ import Signup from './pages/Signup'
 import Trips from './pages/Trips'
 import Footer from './components/Footer'
 import Flight from './pages/Flight'
+import HotelDetail from './pages/HotelDetail'
+import EventDetail from './pages/EventDetail'
+import TripDetail from './pages/TripDetail'
 
 function App() {
   return (
@@ -18,8 +21,11 @@ function App() {
       <Routes>
         <Route path='/' element={<Home/>} />
         <Route path='/events' element={<Events/>} />
+        <Route path='/events/:id' element={<EventDetail/>} />
         <Route path='/hotels' element={<Hotels/>} />
+        <Route path='/hotels/:id' element={<HotelDetail/>} />
         <Route path='/trips' element={<Trips/>} />
+        <Route path='/trips/:id' element={<TripDetail/>} />
         <Route path='/flights' element={<Flight/>} />
         <Route path='/login' element={<Login/>} />
         <Route path='/signup' element={<Signup/>} />

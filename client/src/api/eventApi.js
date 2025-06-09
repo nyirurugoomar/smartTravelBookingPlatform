@@ -15,5 +15,10 @@ export const getPastEvents = async () => {
   return events.filter(event => new Date(event.date) <= now);
 };
 
+export const getEventById = async (id) => {
+  const event = await eventApi.getById(id);
+  return event;
+};
+
 // Export the base CRUD operations
 export default eventApi; 

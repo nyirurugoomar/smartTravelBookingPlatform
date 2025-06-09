@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import { hotelApi } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 function Hotels() {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadHotels = async () => {
@@ -65,6 +67,7 @@ function Hotels() {
           {hotels.map((hotel) => (
             <div 
               key={hotel._id} 
+              onClick={() => navigate(`/hotels/${hotel._id}`)}
               style={{
                 backgroundImage: `url(${
                   Array.isArray(hotel.images) && hotel.images.length > 0

@@ -17,5 +17,10 @@ export const getTripsByDuration = async (minDays, maxDays) => {
   });
 };
 
+export const getTripById = async (id) => {
+  const trip = await tripApi.getById(id);
+  return trip;
+};
+
 // Export the base CRUD operations
 export default tripApi; 
