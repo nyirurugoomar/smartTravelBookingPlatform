@@ -4,7 +4,7 @@ function Hero() {
   return (
     <div className='flex flex-col md:flex-row flex-wrap justify-center items-center min-h-[400px] bg-[#5f6FFF] rounded-lg px-6 md:px-10 lg:px-20'>
     <div className='flex flex-col gap-4 items-center max-w-2xl'>
-        <h1 className='text-white text-4xl font-bold text-center'>Welcome to our website</h1>
+        <h1 className='text-white text-4xl font-bold text-center'>Welcome to our Smart Travel Booking</h1>
         <p className='text-white text-lg text-center'>Find the best deals on hotels, flights, trips, and events. Start your adventure today.</p>
         <div className='w-full max-w-4xl'>
             <div className='bg-white rounded-full shadow-lg p-2 flex items-center'>
