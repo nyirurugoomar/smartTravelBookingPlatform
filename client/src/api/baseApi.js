@@ -1,6 +1,6 @@
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Generic fetch function with error handling
+
 export const fetchFromApi = async (endpoint) => {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`);
@@ -14,7 +14,7 @@ export const fetchFromApi = async (endpoint) => {
   }
 };
 
-// Generic CRUD operations
+
 export const createApi = (resource) => ({
   getAll: () => fetchFromApi(`/${resource}`),
   getById: (id) => fetchFromApi(`/${resource}/${id}`),

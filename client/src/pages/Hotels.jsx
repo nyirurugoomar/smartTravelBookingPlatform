@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import { hotelApi } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 function Hotels() {
   const [hotels, setHotels] = useState([]);
+  const [filteredHotels, setFilteredHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const loadHotels = async () => {
       try {
         const data = await hotelApi.getAll();
-        console.log('Received hotels data:', data); // Debug log
+        console.log('Received hotels data:', data);
         setHotels(data);
         setLoading(false);
       } catch (err) {
-        console.error('Error loading hotels:', err); // Debug log
+        console.error('Error loading hotels:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -25,6 +27,30 @@ function Hotels() {
 
     loadHotels();
   }, []);
+
+  // Filter hotels based on search parameters
+  useEffect(() => {
+    const location = searchParams.get('location')?.toLowerCase();
+    const dates = searchParams.get('dates');
+
+    if (!location && !dates) {
+      setFilteredHotels(hotels);
+      return;
+    }
+
+    const filtered = hotels.filter(hotel => {
+      const matchesLocation = !location || 
+        (hotel.address?.city?.toLowerCase().includes(location) || 
+         hotel.address?.country?.toLowerCase().includes(location));
+      
+      // Add date filtering logic here if needed
+      // const matchesDates = !dates || ... 
+
+      return matchesLocation;
+    });
+
+    setFilteredHotels(filtered);
+  }, [hotels, searchParams]);
 
   if (loading) {
     return (
@@ -48,12 +74,18 @@ function Hotels() {
     );
   }
 
-  if (!hotels || hotels.length === 0) {
+  if (!filteredHotels || filteredHotels.length === 0) {
     return (
       <div className='flex flex-col gap-4 py-4'>
         <Hero />
-        <div className="flex justify-center items-center min-h-[400px]">
-          <p className="text-gray-500">No hotels available</p>
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <p className="text-gray-500">No hotels found matching your search criteria</p>
+          <button 
+            onClick={() => navigate('/hotels')}
+            className="text-primary hover:text-blue-700 transition-colors"
+          >
+            Clear search
+          </button>
         </div>
       </div>
     );
@@ -63,8 +95,21 @@ function Hotels() {
     <div className='flex flex-col gap-4 py-4'>
       <Hero />
       <div className='flex flex-col gap-4 mt-10'>
+        {searchParams.toString() && (
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">
+              Search Results ({filteredHotels.length})
+            </h2>
+            <button 
+              onClick={() => navigate('/hotels')}
+              className="text-primary hover:text-blue-700 transition-colors"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
         <div className='w-full grid grid-cols-auto gap-4 gap-y-6'>
-          {hotels.map((hotel) => (
+          {filteredHotels.map((hotel) => (
             <div 
               key={hotel._id} 
               onClick={() => navigate(`/hotels/${hotel._id}`)}
