@@ -10,10 +10,10 @@ const eventSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  images: {
+  images: [{
     type: String,
     required: true
-  },
+  }],
   date: {
     type: Date,
     required: true
@@ -28,13 +28,16 @@ const eventSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   capacity: {
     type: Number,
-    required: true
-  },
-  
+    required: true,
+    min: 1
+  }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Event',eventSchema);
+module.exports = mongoose.model('Event', eventSchema);
