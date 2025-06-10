@@ -7,12 +7,23 @@ const Hotel = require('../models/hotel.model');
 const getUserBookings = async (req, res) => {
   try {
     const userId = req.user.userId;
+    console.log('Fetching bookings for user:', userId);
+
     const bookings = await Booking.find({ userId })
       .sort({ createdAt: -1 }); // Most recent first
+    
+    console.log('Found bookings:', bookings.length);
+    console.log('Bookings:', JSON.stringify(bookings, null, 2));
 
     // Populate item details based on itemType
     const populatedBookings = await Promise.all(bookings.map(async (booking) => {
       let itemDetails = null;
+      console.log('Populating details for booking:', {
+        id: booking._id,
+        itemType: booking.itemType,
+        itemId: booking.itemId
+      });
+
       switch (booking.itemType) {
         case 'event':
           itemDetails = await Event.findById(booking.itemId);
@@ -25,12 +36,15 @@ const getUserBookings = async (req, res) => {
           break;
       }
 
+      console.log('Item details found:', itemDetails ? 'yes' : 'no');
+
       return {
         ...booking.toObject(),
         itemDetails
       };
     }));
 
+    console.log('Sending response with populated bookings');
     res.json(populatedBookings);
   } catch (err) {
     console.error('Error fetching user bookings:', err);

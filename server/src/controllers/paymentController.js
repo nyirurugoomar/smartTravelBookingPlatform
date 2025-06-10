@@ -5,10 +5,22 @@ const Booking = require('../models/booking.model');
 const createPaymentIntent = async (req, res) => {
   try {
     const { amount, currency = 'rwf', metadata } = req.body;
+    console.log('Creating payment intent with:', {
+      amount,
+      currency,
+      metadata,
+      userId: req.user.userId
+    });
 
     // Validate required fields
     if (!amount) {
       return res.status(400).json({ error: 'Amount is required' });
+    }
+
+    // Validate metadata
+    if (!metadata.itemType || !metadata.itemId) {
+      console.error('Missing required metadata:', metadata);
+      return res.status(400).json({ error: 'Item type and ID are required' });
     }
 
     // For RWF, we need to convert to USD to meet Stripe's minimum amount requirement
@@ -29,11 +41,12 @@ const createPaymentIntent = async (req, res) => {
       const usdAmount = (amount / RWF_TO_USD_RATE) * 100; // Convert to cents for USD
       
       // Create a PaymentIntent with USD
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentData = {
         amount: Math.round(usdAmount), // Amount in cents for USD
         currency: 'usd',
         metadata: {
           ...metadata,
+          userId: req.user.userId, // Add user ID to metadata
           originalAmount: amount,
           originalCurrency: 'rwf',
           rwfToUsdRate: RWF_TO_USD_RATE
@@ -41,6 +54,16 @@ const createPaymentIntent = async (req, res) => {
         automatic_payment_methods: {
           enabled: true,
         },
+      };
+
+      console.log('Creating USD payment intent with data:', paymentIntentData);
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+      console.log('Payment intent created:', {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        metadata: paymentIntent.metadata
       });
 
       res.json({
@@ -50,13 +73,26 @@ const createPaymentIntent = async (req, res) => {
       });
     } else {
       // Handle other currencies (converting to cents)
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentData = {
         amount: Math.round(amount * 100),
         currency: currency.toLowerCase(),
-        metadata,
+        metadata: {
+          ...metadata,
+          userId: req.user.userId // Add user ID to metadata
+        },
         automatic_payment_methods: {
           enabled: true,
         },
+      };
+
+      console.log('Creating payment intent with data:', paymentIntentData);
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+      console.log('Payment intent created:', {
+        id: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        metadata: paymentIntent.metadata
       });
 
       res.json({
@@ -64,7 +100,11 @@ const createPaymentIntent = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error('Error creating payment intent:', err);
+    console.error('Error creating payment intent:', {
+      error: err.message,
+      stack: err.stack,
+      code: err.code
+    });
     if (err.code === 'parameter_invalid_integer') {
       res.status(400).json({ 
         error: 'Amount is too small. Minimum payment amount is 200 RWF',
@@ -91,6 +131,7 @@ const getPaymentIntent = async (req, res) => {
 // Handle webhook events
 const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
+  console.log('Webhook received with signature:', sig);
 
   try {
     const event = stripe.webhooks.constructEvent(
@@ -99,47 +140,81 @@ const handleWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
+    console.log('Webhook event constructed successfully:', {
+      type: event.type,
+      id: event.id
+    });
+
     // Handle the event
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
+        console.log('Payment succeeded - Full payment intent:', JSON.stringify(paymentIntent, null, 2));
         
+        // Validate required metadata
+        if (!paymentIntent.metadata.userId || !paymentIntent.metadata.itemType || !paymentIntent.metadata.itemId) {
+          console.error('Missing required metadata:', {
+            userId: paymentIntent.metadata.userId,
+            itemType: paymentIntent.metadata.itemType,
+            itemId: paymentIntent.metadata.itemId
+          });
+          return res.status(400).json({ error: 'Missing required metadata' });
+        }
+
         // Create a booking for successful payments
         try {
-          const booking = new Booking({
+          console.log('Creating booking with metadata:', paymentIntent.metadata);
+          
+          const bookingData = {
             userId: paymentIntent.metadata.userId,
             itemType: paymentIntent.metadata.itemType,
             itemId: paymentIntent.metadata.itemId,
             paymentIntentId: paymentIntent.id,
-            amount: paymentIntent.amount / (paymentIntent.currency === 'rwf' ? 1 : 100), // Convert back from cents if needed
+            amount: paymentIntent.amount / (paymentIntent.currency === 'rwf' ? 1 : 100),
             currency: paymentIntent.currency,
             status: 'completed',
             bookingDetails: {
               ...paymentIntent.metadata,
-              // Convert string dates back to Date objects if they exist
               checkIn: paymentIntent.metadata.checkIn ? new Date(paymentIntent.metadata.checkIn) : undefined,
               checkOut: paymentIntent.metadata.checkOut ? new Date(paymentIntent.metadata.checkOut) : undefined,
               tripDate: paymentIntent.metadata.tripDate ? new Date(paymentIntent.metadata.tripDate) : undefined,
-              // Convert numeric strings back to numbers
               guests: paymentIntent.metadata.guests ? parseInt(paymentIntent.metadata.guests) : undefined,
               numberOfGuests: paymentIntent.metadata.numberOfGuests ? parseInt(paymentIntent.metadata.numberOfGuests) : undefined
             }
+          };
+
+          console.log('Attempting to create booking with data:', JSON.stringify(bookingData, null, 2));
+
+          const booking = new Booking(bookingData);
+          const savedBooking = await booking.save();
+          
+          console.log('Booking created successfully:', {
+            id: savedBooking._id,
+            userId: savedBooking.userId,
+            itemType: savedBooking.itemType,
+            status: savedBooking.status
           });
 
-          await booking.save();
-          console.log('Booking created:', booking._id);
+          // Verify the booking was saved
+          const verifiedBooking = await Booking.findById(savedBooking._id);
+          console.log('Verified booking in database:', verifiedBooking ? 'Found' : 'Not found');
+
         } catch (bookingError) {
-          console.error('Error creating booking:', bookingError);
-          // Don't throw the error, as the payment was successful
-          // We can handle failed booking creation separately
+          console.error('Error creating booking:', {
+            error: bookingError.message,
+            stack: bookingError.stack,
+            metadata: paymentIntent.metadata
+          });
         }
         break;
 
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object;
+        console.log('Payment failed - Full payment intent:', JSON.stringify(failedPayment, null, 2));
+        
         // Create a failed booking record
         try {
-          const booking = new Booking({
+          const bookingData = {
             userId: failedPayment.metadata.userId,
             itemType: failedPayment.metadata.itemType,
             itemId: failedPayment.metadata.itemId,
@@ -155,12 +230,26 @@ const handleWebhook = async (req, res) => {
               guests: failedPayment.metadata.guests ? parseInt(failedPayment.metadata.guests) : undefined,
               numberOfGuests: failedPayment.metadata.numberOfGuests ? parseInt(failedPayment.metadata.numberOfGuests) : undefined
             }
+          };
+
+          console.log('Attempting to create failed booking with data:', JSON.stringify(bookingData, null, 2));
+
+          const booking = new Booking(bookingData);
+          const savedBooking = await booking.save();
+          
+          console.log('Failed booking recorded:', {
+            id: savedBooking._id,
+            userId: savedBooking.userId,
+            itemType: savedBooking.itemType,
+            status: savedBooking.status
           });
 
-          await booking.save();
-          console.log('Failed booking recorded:', booking._id);
         } catch (bookingError) {
-          console.error('Error recording failed booking:', bookingError);
+          console.error('Error recording failed booking:', {
+            error: bookingError.message,
+            stack: bookingError.stack,
+            metadata: failedPayment.metadata
+          });
         }
         break;
 
@@ -170,7 +259,11 @@ const handleWebhook = async (req, res) => {
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Webhook error:', {
+      message: error.message,
+      stack: error.stack,
+      signature: sig
+    });
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 };
