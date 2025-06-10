@@ -10,10 +10,11 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
-    // For RWF, we need to ensure the amount converts to at least 50 cents USD
+    // For RWF, we need to convert to USD to meet Stripe's minimum amount requirement
     // Current approximate rate: 1 USD ≈ 1300 RWF
-    // So 50 cents USD ≈ 650 RWF
-    const MIN_RWF_AMOUNT = 200; // Minimum amount in RWF as requested
+    const RWF_TO_USD_RATE = 1300;
+    const MIN_USD_AMOUNT = 0.50; // Stripe's minimum amount in USD
+    const MIN_RWF_AMOUNT = 200; // Our minimum amount in RWF
 
     if (currency.toLowerCase() === 'rwf') {
       if (amount < MIN_RWF_AMOUNT) {
@@ -23,14 +24,18 @@ const createPaymentIntent = async (req, res) => {
         });
       }
 
-      // Create a PaymentIntent with the RWF amount
+      // Convert RWF to USD for Stripe
+      const usdAmount = (amount / RWF_TO_USD_RATE) * 100; // Convert to cents for USD
+      
+      // Create a PaymentIntent with USD
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // RWF doesn't use cents
-        currency: 'rwf',
+        amount: Math.round(usdAmount), // Amount in cents for USD
+        currency: 'usd',
         metadata: {
           ...metadata,
           originalAmount: amount,
-          currency: 'rwf'
+          originalCurrency: 'rwf',
+          rwfToUsdRate: RWF_TO_USD_RATE
         },
         automatic_payment_methods: {
           enabled: true,
@@ -39,6 +44,8 @@ const createPaymentIntent = async (req, res) => {
 
       res.json({
         clientSecret: paymentIntent.client_secret,
+        originalAmount: amount,
+        usdAmount: usdAmount / 100 // Convert back to dollars for display
       });
     } else {
       // Handle other currencies (converting to cents)
