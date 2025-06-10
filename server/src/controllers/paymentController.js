@@ -10,6 +10,14 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
+    // Check minimum amount for RWF (approximately 1000 RWF = $0.50 USD)
+    if (currency.toLowerCase() === 'rwf' && amount < 50) {
+      return res.status(400).json({ 
+        error: 'Minimum payment amount is 50 RWF (approximately $0.10 USD)',
+        minAmount: 1000
+      });
+    }
+
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount: currency.toLowerCase() === 'rwf' ? Math.round(amount) : Math.round(amount * 100), // Only convert to cents for non-RWF currencies
