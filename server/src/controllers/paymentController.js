@@ -10,31 +10,61 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
-    // Check minimum amount for RWF (approximately 200 RWF = $0.50 USD)
-    if (currency.toLowerCase() === 'rwf' && amount < 200) {
-      return res.status(400).json({ 
-        error: 'Minimum payment amount is 200 RWF (approximately $0.50 USD)',
-        minAmount: 200
+    // For RWF, we need to ensure the amount converts to at least 50 cents USD
+    // Current approximate rate: 1 USD ≈ 1300 RWF
+    // So 50 cents USD ≈ 650 RWF
+    const MIN_RWF_AMOUNT = 200; // Minimum amount in RWF as requested
+
+    if (currency.toLowerCase() === 'rwf') {
+      if (amount < MIN_RWF_AMOUNT) {
+        return res.status(400).json({ 
+          error: `Minimum payment amount is ${MIN_RWF_AMOUNT.toLocaleString()} RWF`,
+          minAmount: MIN_RWF_AMOUNT
+        });
+      }
+
+      // Create a PaymentIntent with the RWF amount
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount), // RWF doesn't use cents
+        currency: 'rwf',
+        metadata: {
+          ...metadata,
+          originalAmount: amount,
+          currency: 'rwf'
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } else {
+      // Handle other currencies (converting to cents)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: currency.toLowerCase(),
+        metadata,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
       });
     }
-
-    // Create a PaymentIntent with the order amount and currency
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: currency.toLowerCase() === 'rwf' ? Math.round(amount) : Math.round(amount * 100), // Only convert to cents for non-RWF currencies
-      currency: currency.toLowerCase(),
-      metadata,
-      // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
-
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-    });
   } catch (err) {
     console.error('Error creating payment intent:', err);
-    res.status(500).json({ error: err.message });
+    if (err.code === 'parameter_invalid_integer') {
+      res.status(400).json({ 
+        error: 'Amount is too small. Minimum payment amount is 200 RWF',
+        minAmount: 200
+      });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
   }
 };
 
