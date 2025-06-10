@@ -10,11 +10,11 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
-    // Check minimum amount for RWF (approximately 1000 RWF = $0.50 USD)
-    if (currency.toLowerCase() === 'rwf' && amount < 50) {
+    // Check minimum amount for RWF (approximately 200 RWF = $0.50 USD)
+    if (currency.toLowerCase() === 'rwf' && amount < 200) {
       return res.status(400).json({ 
-        error: 'Minimum payment amount is 50 RWF (approximately $0.10 USD)',
-        minAmount: 1000
+        error: 'Minimum payment amount is 200 RWF (approximately $0.50 USD)',
+        minAmount: 200
       });
     }
 
