@@ -12,7 +12,7 @@ const createPaymentIntent = async (req, res) => {
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: currency.toLowerCase() === 'rwf' ? Math.round(amount) : Math.round(amount * 100), // Only convert to cents for non-RWF currencies
       currency: currency.toLowerCase(),
       metadata,
       // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
