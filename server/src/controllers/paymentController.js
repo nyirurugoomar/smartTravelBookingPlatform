@@ -1,4 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Booking = require('../models/booking.model');
 
 // Create a payment intent
 const createPaymentIntent = async (req, res) => {
@@ -102,18 +103,67 @@ const handleWebhook = async (req, res) => {
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        // Handle successful payment
-        // Update your database, send confirmation email, etc.
-        console.log('Payment succeeded:', paymentIntent.id);
+        
+        // Create a booking for successful payments
+        try {
+          const booking = new Booking({
+            userId: paymentIntent.metadata.userId,
+            itemType: paymentIntent.metadata.itemType,
+            itemId: paymentIntent.metadata.itemId,
+            paymentIntentId: paymentIntent.id,
+            amount: paymentIntent.amount / (paymentIntent.currency === 'rwf' ? 1 : 100), // Convert back from cents if needed
+            currency: paymentIntent.currency,
+            status: 'completed',
+            bookingDetails: {
+              ...paymentIntent.metadata,
+              // Convert string dates back to Date objects if they exist
+              checkIn: paymentIntent.metadata.checkIn ? new Date(paymentIntent.metadata.checkIn) : undefined,
+              checkOut: paymentIntent.metadata.checkOut ? new Date(paymentIntent.metadata.checkOut) : undefined,
+              tripDate: paymentIntent.metadata.tripDate ? new Date(paymentIntent.metadata.tripDate) : undefined,
+              // Convert numeric strings back to numbers
+              guests: paymentIntent.metadata.guests ? parseInt(paymentIntent.metadata.guests) : undefined,
+              numberOfGuests: paymentIntent.metadata.numberOfGuests ? parseInt(paymentIntent.metadata.numberOfGuests) : undefined
+            }
+          });
+
+          await booking.save();
+          console.log('Booking created:', booking._id);
+        } catch (bookingError) {
+          console.error('Error creating booking:', bookingError);
+          // Don't throw the error, as the payment was successful
+          // We can handle failed booking creation separately
+        }
         break;
 
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object;
-        // Handle failed payment
-        console.log('Payment failed:', failedPayment.id);
+        // Create a failed booking record
+        try {
+          const booking = new Booking({
+            userId: failedPayment.metadata.userId,
+            itemType: failedPayment.metadata.itemType,
+            itemId: failedPayment.metadata.itemId,
+            paymentIntentId: failedPayment.id,
+            amount: failedPayment.amount / (failedPayment.currency === 'rwf' ? 1 : 100),
+            currency: failedPayment.currency,
+            status: 'failed',
+            bookingDetails: {
+              ...failedPayment.metadata,
+              checkIn: failedPayment.metadata.checkIn ? new Date(failedPayment.metadata.checkIn) : undefined,
+              checkOut: failedPayment.metadata.checkOut ? new Date(failedPayment.metadata.checkOut) : undefined,
+              tripDate: failedPayment.metadata.tripDate ? new Date(failedPayment.metadata.tripDate) : undefined,
+              guests: failedPayment.metadata.guests ? parseInt(failedPayment.metadata.guests) : undefined,
+              numberOfGuests: failedPayment.metadata.numberOfGuests ? parseInt(failedPayment.metadata.numberOfGuests) : undefined
+            }
+          });
+
+          await booking.save();
+          console.log('Failed booking recorded:', booking._id);
+        } catch (bookingError) {
+          console.error('Error recording failed booking:', bookingError);
+        }
         break;
 
-      // Add more event types as needed
       default:
         console.log(`Unhandled event type ${event.type}`);
     }

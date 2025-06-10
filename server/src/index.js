@@ -10,13 +10,14 @@ const hotelRoutes = require('./routes/hotel.routes');
 const tripRoutes = require('./routes/trip.routes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authRoutes = require('./routes/auth.routes');
+const bookingRoutes = require('./routes/booking.routes');
 
 const app = express();
 
 // CORS configuration
 app.use(cors({
   origin: ['http://localhost:5173', 'https://smart-travel-booking-platform.vercel.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
@@ -34,6 +35,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
