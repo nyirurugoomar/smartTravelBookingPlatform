@@ -9,11 +9,17 @@ const eventRoutes = require('./routes/event.routes');
 const hotelRoutes = require('./routes/hotel.routes');
 const tripRoutes = require('./routes/trip.routes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
-// Basic middleware
-app.use(cors());
+// CORS configuration
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://smart-travel-booking-platform.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
 // IMPORTANT: Stripe webhook needs raw body parsing
 // This must come before any other body parsing middleware
@@ -23,8 +29,9 @@ app.post('/api/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Routes
-app.use('/api/events', eventRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/hotels', hotelRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/payments', paymentRoutes);
 

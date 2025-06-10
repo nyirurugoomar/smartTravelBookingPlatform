@@ -1,32 +1,32 @@
-const stripe = require('../config/stripe');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Create a payment intent
 const createPaymentIntent = async (req, res) => {
   try {
-    const { amount, currency = 'rwf', paymentMethodTypes = ['card'] } = req.body;
+    const { amount, currency = 'rwf', metadata } = req.body;
+
+    // Validate required fields
+    if (!amount) {
+      return res.status(400).json({ error: 'Amount is required' });
+    }
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert to cents/smallest currency unit
+      amount: Math.round(amount * 100), // Convert to cents
       currency: currency.toLowerCase(),
-      payment_method_types: paymentMethodTypes,
-      // Add metadata if needed
-      metadata: {
-        // Add any relevant metadata here
-        // For example: orderId, userId, etc.
-      }
+      metadata,
+      // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+      automatic_payment_methods: {
+        enabled: true,
+      },
     });
 
     res.json({
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id
     });
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).json({ 
-      error: 'Error creating payment intent',
-      message: error.message 
-    });
+  } catch (err) {
+    console.error('Error creating payment intent:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -36,12 +36,9 @@ const getPaymentIntent = async (req, res) => {
     const { paymentIntentId } = req.params;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     res.json(paymentIntent);
-  } catch (error) {
-    console.error('Error retrieving payment intent:', error);
-    res.status(500).json({ 
-      error: 'Error retrieving payment intent',
-      message: error.message 
-    });
+  } catch (err) {
+    console.error('Error retrieving payment intent:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 

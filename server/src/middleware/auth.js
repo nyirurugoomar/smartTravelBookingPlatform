@@ -14,11 +14,11 @@ const authenticateToken = (req, res, next) => {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();
-  } catch (error) {
+  } catch (err) {
     res.status(403).json({ error: 'Invalid token' });
   }
 };
 
 module.exports = {
-  authenticateToken
+  authenticateToken,
 }; 
