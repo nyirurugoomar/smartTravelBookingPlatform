@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { hotelApi } from '../api';
 import Hero from '../components/Hero';
 import Hotels from '../components/Hotels';
+import PaymentForm from '../components/PaymentForm';
 
 function HotelDetail() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ function HotelDetail() {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     const loadHotel = async () => {
@@ -49,6 +51,14 @@ function HotelDetail() {
     if (!selectedRoom || !checkIn || !checkOut) return null;
     const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
     return selectedRoom.price * guests * nights;
+  };
+
+  const handlePaymentSuccess = () => {
+    // You might want to update the room's availability here
+    // or show a success message
+    setShowPayment(false);
+    // Optionally refresh the hotel data
+    loadHotel();
   };
 
   if (loading) {
@@ -335,7 +345,7 @@ function HotelDetail() {
                         </div>
                         <button 
                           className="w-full bg-primary text-white py-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                          onClick={() => alert('Booking functionality coming soon!')}
+                          onClick={() => setShowPayment(true)}
                           disabled={!checkIn || !checkOut}
                         >
                           Book Now
@@ -349,6 +359,24 @@ function HotelDetail() {
           </div>
         </div>
       </div>
+
+      {showPayment && selectedRoom && checkIn && checkOut && (
+        <div className="max-w-2xl mx-auto mt-8">
+          <PaymentForm
+            amount={selectedRoom.price * guests * Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))}
+            itemType="hotel"
+            itemId={hotel._id}
+            metadata={{
+              roomType: selectedRoom.type,
+              checkIn,
+              checkOut,
+              guests
+            }}
+            onSuccess={handlePaymentSuccess}
+            onCancel={() => setShowPayment(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

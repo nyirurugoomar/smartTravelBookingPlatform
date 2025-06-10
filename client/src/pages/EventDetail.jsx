@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { eventApi } from '../api';
 import Hero from '../components/Hero';
 import { format } from 'date-fns';
+import PaymentForm from '../components/PaymentForm';
 
 function EventDetail() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ function EventDetail() {
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [guests, setGuests] = useState(1);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -40,6 +42,14 @@ function EventDetail() {
     if (event?.images?.length) {
       setCurrentImageIndex((prev) => (prev - 1 + event.images.length) % event.images.length);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    // You might want to update the event's available tickets here
+    // or show a success message
+    setShowPayment(false);
+    // Optionally refresh the event data
+    loadEvent();
   };
 
   if (loading) {
@@ -243,7 +253,7 @@ function EventDetail() {
                 </div>
                 <button 
                   className="w-full bg-primary text-white py-3 rounded-full hover:bg-blue-600 transition-colors"
-                  onClick={() => alert('Booking functionality coming soon!')}
+                  onClick={() => setShowPayment(true)}
                 >
                   Buy Tickets
                 </button>
@@ -252,6 +262,18 @@ function EventDetail() {
           </div>
         </div>
       </div>
+
+      {showPayment && (
+        <div className="max-w-2xl mx-auto mt-8">
+          <PaymentForm
+            amount={event.price * guests}
+            itemType="event"
+            itemId={event._id}
+            onSuccess={handlePaymentSuccess}
+            onCancel={() => setShowPayment(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

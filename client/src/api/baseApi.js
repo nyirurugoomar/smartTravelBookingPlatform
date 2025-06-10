@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://smarttravelbookingplatform-backend.onrender.com/api';
 
 
 export const fetchFromApi = async (endpoint) => {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { tripApi } from '../api'
 import Hero from '../components/Hero'
 import { format } from 'date-fns'
+import PaymentForm from '../components/PaymentForm'
 
 function TripDetail() {
     const {id} = useParams()
@@ -12,6 +13,7 @@ function TripDetail() {
     const [error, setError] = useState(null)
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
     const [guests, setGuests] = useState(1)
+    const [showPayment, setShowPayment] = useState(false)
     
     useEffect(()=>{
         const loadTrip = async () => {
@@ -70,6 +72,14 @@ function TripDetail() {
         if (trip?.images?.length) {
             setCurrentImageIndex((prev) => (prev - 1 + trip.images.length) % trip.images.length);
         }
+    };
+
+    const handlePaymentSuccess = () => {
+        // You might want to update the trip's available capacity here
+        // or show a success message
+        setShowPayment(false);
+        // Optionally refresh the trip data
+        loadTrip();
     };
 
     if (loading) {
@@ -279,7 +289,7 @@ function TripDetail() {
                                 </div>
                                 <button 
                                     className='w-full bg-primary text-white py-3 rounded-full hover:bg-blue-600 transition-colors'
-                                    onClick={() => alert('Booking functionality coming soon!')}
+                                    onClick={() => setShowPayment(true)}
                                 >
                                     Book Now
                                 </button>
@@ -288,6 +298,18 @@ function TripDetail() {
                     </div>
                 </div>
             </div>
+
+            {showPayment && (
+                <div className="max-w-2xl mx-auto mt-8">
+                    <PaymentForm
+                        amount={trip.price * guests}
+                        itemType="trip"
+                        itemId={trip._id}
+                        onSuccess={handlePaymentSuccess}
+                        onCancel={() => setShowPayment(false)}
+                    />
+                </div>
+            )}
         </div>
     );
 }

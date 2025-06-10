@@ -12,6 +12,7 @@ import Flight from './pages/Flight'
 import HotelDetail from './pages/HotelDetail'
 import EventDetail from './pages/EventDetail'
 import TripDetail from './pages/TripDetail'
+import PaymentSuccess from './pages/PaymentSuccess'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path='/flights' element={<Flight/>} />
         <Route path='/login' element={<Login/>} />
         <Route path='/signup' element={<Signup/>} />
+        <Route path='/payment-success' element={<PaymentSuccess/>} />
       </Routes>
        <Footer/>
        <div className='text-center'>
