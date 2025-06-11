@@ -5,6 +5,7 @@ import hotel2 from './hotel2.jpg'
 import hotel3 from './hotel3.jpeg'
 import hotel4 from './hotel4.jpg'
 import hotel5 from './hotel5.jpg'
+import userIcon from './user-icon.jpg'
 // events
 import event1 from './event1.jpg'
 import event2 from './event2.jpg'
@@ -24,6 +25,7 @@ import trip5 from './trip5.avif'
 export const assets = {
     profile_pic,
     dropdown_icon,
+    userIcon
    
 }
 

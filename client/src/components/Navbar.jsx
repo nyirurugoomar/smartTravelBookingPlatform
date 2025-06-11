@@ -1,27 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/asset'
+import { useAuth } from '../context/AuthContext'
 
 function Navbar() {
     const navigate = useNavigate();
     const [showMenu, setShowMenu] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        setIsAuthenticated(!!token);
-        if (userData) {
-            setUser(JSON.parse(userData));
-        }
-    }, []);
+    const { isAuthenticated, user, logout } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setUser(null);
+        logout();
         navigate('/');
     };
 
@@ -49,28 +37,29 @@ function Navbar() {
                 <li className='py-1'>FLIGHTS</li>
                 <hr className='border-none outline-none h-0.5 bg-[#5f6FFF] w-3/5 m-auto hidden'/>
               </NavLink>
-              
           </ul>
           <div className='flex items-center gap-5'>
             {
               isAuthenticated
               ? <div className='flex items-center gap-2 cursor-pointer group relative'>
-                <img className='w-8 rounded-full' src={assets.profile_pic} alt='profile'/>
+                <img className='w-8 rounded-full' src={assets.userIcon} alt='profile'/>
                 <img className='w-2.5' src={assets.dropdown_icon} alt='profile'/>
-                <div className=' absolute top-0 right-0 pt-20 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
+                <div className='absolute top-0 right-0 pt-20 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
                    <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-2 p-4'>
-                    <p className='text-sm text-gray-500 mb-2'>{user?.email}</p>
-                    <p onClick={()=>navigate('my-profile')} className='hover:text-black cursor-pointer'>My Profile</p>
+                    <p className=' text-black cursor-pointer flex items-center gap-2 '>
+                      <img src={assets.userIcon} alt="" className='w-8 rounded-full' />
+                      {user?.firstName} {user?.lastName}
+                      </p>
+                    <p onClick={()=>navigate('/my-profile')} className='hover:text-black cursor-pointer'>My Profile</p>
                     <p onClick={handleLogout} className='hover:text-black cursor-pointer'>Logout</p>
                    </div>
                 </div>
-  
               </div>
-              : <button onClick={() =>navigate('/login')} className='bg-[#5f6FFF] text-white py-3 px-8  rounded-full font-light hidden md:block cursor-pointer'>Sign in</button>
+              : <button onClick={() =>navigate('/login')} className='bg-[#5f6FFF] text-white py-3 px-8 rounded-full font-light hidden md:block cursor-pointer'>Sign in</button>
             }
           </div>
       </div>
     )
-  }
+}
 
 export default Navbar

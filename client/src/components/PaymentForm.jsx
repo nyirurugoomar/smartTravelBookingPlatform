@@ -102,11 +102,19 @@ const PaymentForm = ({ amount, itemType, itemId, onSuccess, onCancel }) => {
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
+        // Get user from localStorage
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+          setError('Please log in to make a payment');
+          return;
+        }
+
         console.log('Creating payment intent with:', {
           amount,
           currency: 'rwf',
           itemType,
           itemId,
+          userId: user.id
         });
 
         const response = await api.post('/payments/create-payment-intent', {
@@ -115,6 +123,7 @@ const PaymentForm = ({ amount, itemType, itemId, onSuccess, onCancel }) => {
           metadata: {
             itemType,
             itemId,
+            userId: user.id
           },
         });
 
