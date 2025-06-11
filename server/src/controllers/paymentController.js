@@ -131,8 +131,10 @@ const getPaymentIntent = async (req, res) => {
 // Handle webhook events
 const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  console.log('Webhook received with signature:', sig);
-  console.log('Webhook secret from env:', process.env.STRIPE_WEBHOOK_SECRET ? 'Present' : 'Missing');
+  console.log('=== WEBHOOK RECEIVED ===');
+  console.log('Signature:', sig);
+  console.log('Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
 
   try {
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
@@ -146,17 +148,20 @@ const handleWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    console.log('Webhook event constructed successfully:', {
-      type: event.type,
-      id: event.id,
-      object: event.data.object.object
-    });
+    console.log('=== WEBHOOK EVENT DETAILS ===');
+    console.log('Event type:', event.type);
+    console.log('Event ID:', event.id);
+    console.log('Event data:', JSON.stringify(event.data.object, null, 2));
 
     // Handle the event
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        console.log('Payment succeeded - Full payment intent:', JSON.stringify(paymentIntent, null, 2));
+        console.log('=== PAYMENT SUCCEEDED ===');
+        console.log('Payment Intent ID:', paymentIntent.id);
+        console.log('Amount:', paymentIntent.amount);
+        console.log('Currency:', paymentIntent.currency);
+        console.log('Metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
         
         // Validate required metadata
         if (!paymentIntent.metadata.userId || !paymentIntent.metadata.itemType || !paymentIntent.metadata.itemId) {
@@ -170,7 +175,7 @@ const handleWebhook = async (req, res) => {
 
         // Create a booking for successful payments
         try {
-          console.log('Creating booking with metadata:', paymentIntent.metadata);
+          console.log('=== CREATING BOOKING ===');
           
           const bookingData = {
             userId: paymentIntent.metadata.userId,
@@ -190,28 +195,30 @@ const handleWebhook = async (req, res) => {
             }
           };
 
-          console.log('Attempting to create booking with data:', JSON.stringify(bookingData, null, 2));
+          console.log('Booking data:', JSON.stringify(bookingData, null, 2));
 
           const booking = new Booking(bookingData);
           const savedBooking = await booking.save();
           
-          console.log('Booking created successfully:', {
-            id: savedBooking._id,
-            userId: savedBooking.userId,
-            itemType: savedBooking.itemType,
-            status: savedBooking.status
-          });
+          console.log('=== BOOKING SAVED ===');
+          console.log('Booking ID:', savedBooking._id);
+          console.log('User ID:', savedBooking.userId);
+          console.log('Item Type:', savedBooking.itemType);
+          console.log('Status:', savedBooking.status);
 
           // Verify the booking was saved
           const verifiedBooking = await Booking.findById(savedBooking._id);
-          console.log('Verified booking in database:', verifiedBooking ? 'Found' : 'Not found');
+          console.log('=== BOOKING VERIFICATION ===');
+          console.log('Booking found in database:', verifiedBooking ? 'Yes' : 'No');
+          if (verifiedBooking) {
+            console.log('Verified booking details:', JSON.stringify(verifiedBooking, null, 2));
+          }
 
         } catch (bookingError) {
-          console.error('Error creating booking:', {
-            error: bookingError.message,
-            stack: bookingError.stack,
-            metadata: paymentIntent.metadata
-          });
+          console.error('=== BOOKING CREATION ERROR ===');
+          console.error('Error message:', bookingError.message);
+          console.error('Error stack:', bookingError.stack);
+          console.error('Payment intent metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
         }
         break;
 
@@ -266,11 +273,10 @@ const handleWebhook = async (req, res) => {
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Webhook error:', {
-      message: error.message,
-      stack: error.stack,
-      signature: sig
-    });
+    console.error('=== WEBHOOK ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Signature:', sig);
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 };

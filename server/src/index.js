@@ -11,6 +11,7 @@ const tripRoutes = require('./routes/trip.routes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authRoutes = require('./routes/auth.routes');
 const bookingRoutes = require('./routes/booking.routes');
+const flightRoutes = require('./routes/flight.routes');
 
 const app = express();
 
@@ -22,11 +23,9 @@ app.use(cors({
   credentials: true,
 }));
 
-// IMPORTANT: Stripe webhook needs raw body parsing
-// This must come before any other body parsing middleware
+
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// Regular body parsing middleware for all other routes
 app.use(express.json());
 
 // Routes
@@ -36,8 +35,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/flights', flightRoutes);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
