@@ -17,7 +17,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://smart-travel-booking-platform.vercel.app'],
+  origin: ['http://localhost:5173', 'https://smart-travel-booking-platform.vercel.app','https://smart-travel-booking-platform.vercel.app/'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
