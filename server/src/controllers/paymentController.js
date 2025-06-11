@@ -132,8 +132,14 @@ const getPaymentIntent = async (req, res) => {
 const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   console.log('Webhook received with signature:', sig);
+  console.log('Webhook secret from env:', process.env.STRIPE_WEBHOOK_SECRET ? 'Present' : 'Missing');
 
   try {
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
@@ -142,7 +148,8 @@ const handleWebhook = async (req, res) => {
 
     console.log('Webhook event constructed successfully:', {
       type: event.type,
-      id: event.id
+      id: event.id,
+      object: event.data.object.object
     });
 
     // Handle the event
