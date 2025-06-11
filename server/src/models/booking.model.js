@@ -8,11 +8,11 @@ const bookingSchema = new mongoose.Schema({
   },
   itemType: {
     type: String,
-    enum: ['event', 'trip', 'hotel'],
+    enum: ['event', 'trip', 'hotel', 'flight'],
     required: true
   },
   itemId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String, // Changed to String to accommodate flight numbers
     required: true
   },
   paymentIntentId: {
@@ -25,7 +25,7 @@ const bookingSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'rwf'
+    default: 'usd' // Changed default to USD for flights
   },
   status: {
     type: String,
@@ -42,7 +42,15 @@ const bookingSchema = new mongoose.Schema({
     roomType: String,
     // For trips
     tripDate: Date,
-    numberOfGuests: Number
+    numberOfGuests: Number,
+    // For flights
+    flightClass: String,
+    passengers: Number,
+    airline: String,
+    departure: String,
+    arrival: String,
+    departureTime: Date,
+    arrivalTime: Date
   },
   createdAt: {
     type: Date,

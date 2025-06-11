@@ -161,22 +161,30 @@ const getFlightDetails = async (req, res) => {
 
     console.log('Getting flight details:', { flightNumber, date });
 
+    const apiKey = process.env.AVIATION_STACK_API;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    // Use the live flights endpoint with filters
     const response = await axios.get('https://api.aviationstack.com/v1/flights', {
       params: {
-        access_key: process.env.AVIATION_STACK_API,
+        access_key: apiKey,
         flight_iata: flightNumber,
-        flight_date: date
+        limit: 1
       }
     });
 
     if (!response.data.data || response.data.data.length === 0) {
       return res.status(404).json({
         error: 'Flight not found',
-        message: `No flight found with number ${flightNumber} on ${date}`
+        message: `No flight found with number ${flightNumber}`
       });
     }
 
     const flight = response.data.data[0];
+    
+    // Add mock pricing data since it's not available in the API
     const flightDetails = {
       flightNumber: flight.flight.iata,
       airline: {
@@ -187,28 +195,37 @@ const getFlightDetails = async (req, res) => {
         airport: flight.departure.airport,
         iata: flight.departure.iata,
         scheduled: flight.departure.scheduled,
-        estimated: flight.departure.estimated,
-        actual: flight.departure.actual,
         terminal: flight.departure.terminal,
-        gate: flight.departure.gate,
-        delay: flight.departure.delay
+        gate: flight.departure.gate
       },
       arrival: {
         airport: flight.arrival.airport,
         iata: flight.arrival.iata,
         scheduled: flight.arrival.scheduled,
-        estimated: flight.arrival.estimated,
-        actual: flight.arrival.actual,
         terminal: flight.arrival.terminal,
-        gate: flight.arrival.gate,
-        delay: flight.arrival.delay
+        gate: flight.arrival.gate
       },
       status: flight.flight_status,
       aircraft: {
         registration: flight.aircraft?.registration || 'Unknown',
         type: flight.aircraft?.type || 'Unknown'
       },
-      live: flight.live || null
+      live: flight.live || null,
+      // Add mock pricing data
+      pricing: {
+        economy: {
+          price: 100,
+          available: true
+        },
+        business: {
+          price: 300,
+          available: true
+        },
+        first: {
+          price: 500,
+          available: true
+        }
+      }
     };
 
     res.json({
