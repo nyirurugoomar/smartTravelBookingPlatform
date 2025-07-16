@@ -23,8 +23,7 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Item type and ID are required' });
     }
 
-    // For RWF, we need to convert to USD to meet Stripe's minimum amount requirement
-    // Current approximate rate: 1 USD ≈ 1300 RWF
+    // For RWF, we need to convert to USD 
     const RWF_TO_USD_RATE = 1300;
     const MIN_USD_AMOUNT = 0.50; // Stripe's minimum amount in USD
     const MIN_RWF_AMOUNT = 200; // Our minimum amount in RWF
@@ -142,6 +141,7 @@ const handleWebhook = async (req, res) => {
       return res.status(500).json({ error: 'Webhook secret not configured' });
     }
 
+    // for here im tryin to verifi webhook is reealu from stripe
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
