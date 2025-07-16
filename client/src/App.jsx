@@ -9,8 +9,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Trips from './pages/Trips'
 import Footer from './components/Footer'
-import Flight from './pages/Flight'
-import FlightDetail from './pages/FlightDetail'
+import Flight from './pages/Flight' 
+import FlightDetail from './pages/FlightDetail' 
 import HotelDetail from './pages/HotelDetail'
 import EventDetail from './pages/EventDetail'
 import TripDetail from './pages/TripDetail'
@@ -32,8 +32,10 @@ function App() {
             <Route path="/hotels/:id" element={<HotelDetail />} />
             <Route path="/trips" element={<Trips />} />
             <Route path="/trips/:id" element={<TripDetail />} />
+            
             <Route path="/flights" element={<Flight />} />
             <Route path="/flights/:flightNumber" element={<FlightDetail />} />
+           
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />

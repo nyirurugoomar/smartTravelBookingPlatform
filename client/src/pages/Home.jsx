@@ -3,7 +3,7 @@ import Hero from '../components/Hero'
 import Hotels from '../components/Hotels'
 import Event from '../components/Event'
 import Trip from '../components/Trip'
-import Flights from '../components/Flights'
+// import Flights from '../components/Flights' // FLIGHT API DISABLED - Uncomment to enable
 
 function Home() {
   return (
@@ -11,7 +11,7 @@ function Home() {
         <Hero/>
         <Hotels/>
         <Event/>
-        <Flights/>
+        {/* <Flights/> FLIGHT API DISABLED - Uncomment to enable */}
         <Trip/>
     </div>
   )

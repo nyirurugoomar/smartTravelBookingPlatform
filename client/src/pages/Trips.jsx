@@ -47,22 +47,24 @@ function Trips() {
       // Log each trip's data for debugging
       console.log('Checking trip:', {
         id: trip._id,
-        name: trip.name,
-        destination: trip.destination,
-        departureLocation: trip.departureLocation,
-        capacity: trip.capacity
+      name: trip.name,
+      location: trip.location,
+      capacity: trip.capacity,
+      date: trip.date
       });
 
       let matchesLocation = false;
       if (location) {
-        const destinationMatch = trip.destination?.toLowerCase().includes(location);
-        const departureMatch = trip.departureLocation?.toLowerCase().includes(location);
-        matchesLocation = destinationMatch || departureMatch;
+        const locationMatch = trip.location?.toLowerCase().includes(location);
+      const nameMatch = trip.name?.toLowerCase().includes(location);
+      const activitiesMatch = trip.activities?.toLowerCase().includes(location);
+        matchesLocation = locationMatch || nameMatch || activitiesMatch;
         
         console.log('Location match for trip', trip._id, ':', {
           location,
-          destinationMatch,
-          departureMatch,
+          locationMatch,
+          nameMatch,
+          activitiesMatch,
           matchesLocation
         });
       } else {
@@ -84,9 +86,24 @@ function Trips() {
         matchesGuests = true;
       }
 
+      let matchesDates = false;
+    if (dates) {
+      const searchDate = new Date(dates);
+      const tripDate = new Date(trip.date);
+      // Check if trip date is on or after the search date
+      matchesDates = tripDate >= searchDate;
+      
+      console.log('Date match for trip', trip._id, ':', {
+        searchDate: searchDate.toISOString(),
+        tripDate: tripDate.toISOString(),
+        matchesDates
+      });
+    } else {
+      matchesDates = true;
+    }
     
 
-      const matches = matchesLocation && matchesGuests;
+      const matches = matchesLocation && matchesGuests && matchesDates;
       console.log('Final match for trip', trip._id, ':', matches);
       
       return matches;
@@ -139,19 +156,31 @@ function Trips() {
     <div className='flex flex-col gap-4 py-4'>
       <Hero />
       <div className='flex flex-col gap-4 mt-10'>
-        {searchParams.toString() && (
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">
-              Search Results ({filteredTrips.length})
-            </h2>
-            <button 
-              onClick={() => navigate('/trips')}
-              className="text-primary hover:text-blue-700 transition-colors"
-            >
-              Clear search
-            </button>
-          </div>
-        )}
+      {searchParams.toString() && (
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h2 className="text-xl font-semibold">
+        Search Results ({filteredTrips.length})
+      </h2>
+      {searchParams.get('location') && (
+        <p className="text-sm text-gray-600">
+          Trips matching "{searchParams.get('location')}"
+        </p>
+      )}
+      {searchParams.get('guests') && (
+        <p className="text-sm text-gray-600">
+          for {searchParams.get('guests')} guests
+        </p>
+      )}
+    </div>
+    <button 
+      onClick={() => navigate('/trips')}
+      className="text-primary hover:text-blue-700 transition-colors"
+    >
+      Clear search
+    </button>
+  </div>
+)}
         <div className='w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 gap-y-6'>
           {filteredTrips.map((trip) => (
             <div 

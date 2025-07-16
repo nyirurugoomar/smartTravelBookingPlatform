@@ -61,7 +61,7 @@ function Trip() {
 
   return (
     <div className="py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">Trips</h1>
+      <h1 className="text-2xl font-bold mb-6">Trips { " "}<span className="text-primary">({trips.length})</span></h1>
       <div className="grid grid-cols-4 grid-rows-2 gap-6 max-w-7xl mx-auto">
         {/* Main Card (big, spans 2x2) */}
         <div
@@ -119,7 +119,7 @@ function Trip() {
               
               <div>
                 <p className="mb-1 text-white">{trips[0]?.date
-                ? format(new Date(trips[0].date), "MMMM d, yyyy") // e.g. June 9, 2025
+                ? format(new Date(trips[0].date), "MMMM d, yyyy") 
                 : "Featured Trip"}</p>
                 <p className="mb-1 text-white">
                   RWF {trip.price?.toLocaleString() || "Price not available"}

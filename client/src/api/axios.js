@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://smarttravelbookingplatform-backend.onrender.com/api', // Temporarily use local server for testing
+  baseURL: 'https://smarttravelbookingplatform-backend.onrender.com/api', 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to add the auth token to requests
+// adding authorized token injection
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
